@@ -26,9 +26,8 @@ class Product extends Api
             $status = $this->request->post("status");
 
             $data = DB::name('products')
-                ->where('status', 1)
+                ->where('status',"public")
                 ->select(); // $data គឺជា Array
-
             // 1. យក Domain
             $domain = $this->request->domain();
             
@@ -54,66 +53,66 @@ class Product extends Api
         }
     }
 
-    
-
     public function addProduct()
     {
         try {
-            $title = $this->request->post("title");
-            $short_content = $this->request->post("short_content", "");
-            $content = $this->request->post("content", "");
+            $product_name = $this->request->post("product_name");
+            $category_id = $this->request->post("category_id");
+            $product_details = $this->request->post("product_details");
+            $product_cost = $this->request->post("product_cost");
+            $product_price = $this->request->post("product_price");
+            $status = $this->request->post("status");
 
-            // ✅ ពិនិត្យមើលថា title មានរួចហើយឬនៅ
-            $exists = Db::name('products')->where('title', $title)->find();
+            // ✅ ពិនិត្យថា category_id មានក្នុង categories table ឬអត់
+            $categoryExists = Db::name('categories')->where('id', $category_id)->find();
+            if (!$categoryExists) {
+                return json(['code' => 0, 'msg' => 'Category ID does not exist']);
+            }
+
+            // ✅ ពិនិត្យថា product មានរួចហើយឬនៅ
+            $exists = Db::name('products')->where('product_name', $product_name)->find();
             if ($exists) {
-                return json(['code' => 0, 'msg' => 'This Product is already']);
+                return json(['code' => 0, 'msg' => 'This product already exists']);
             }
 
             $file = request()->file('image');
             $imagePath = null;
 
             if ($file) {
-                // ផ្ទុកទៅក្នុង public/uploads/
                 $uploadDir = ROOT_PATH . 'public' . DS . 'uploads';
                 $info = $file->move($uploadDir);
                 if ($info) {
-                    // path ដែលរក្សាទុកក្នុង DB
                     $imagePath = '/uploads/' . str_replace('\\', '/', $info->getSaveName());
                 } else {
                     return json(['code' => 0, 'msg' => $file->getError()]);
                 }
             }
 
-            // រៀបចំទិន្នន័យសម្រាប់ insert
+            // ✅ រៀបចំទិន្នន័យសម្រាប់ insert
             $dataToInsert = [
-                'title' => $title,
+                'product_name' => $product_name,
                 'image' => $imagePath,
-                'short_content' => $short_content,
-                'content' => $content,
-                'status' => 1,
+                'category_id' => $category_id,
+                'product_details' => $product_details,
+                'status' => $status ?: 'public',
+                'product_cost' => $product_cost,
+                'product_price' => $product_price,
+                'current_stock' => 0,
                 'createtime' => time(),
                 'updatetime' => time()
             ];
 
-            // insert ទៅ DB
-            $ProductId = Db::name('products')->insertGetId($dataToInsert);
+            // ✅ Insert ទៅ DB
+            $newProductId = Db::name('products')->insertGetId($dataToInsert);
 
-            if ($ProductId) {
-                // query ទិន្នន័យថ្មី
-                $Product = Db::name('products')->where('id', $ProductId)->find();
-
-                // បន្ថែម domain ទៅ image_path
+            if ($newProductId) {
+                $Product = Db::name('products')->where('id', $newProductId)->find();
                 if (!empty($Product['image'])) {
                     $Product['image'] = request()->domain() . $Product['image'];
                 }
-
-                return json([
-                    'code' => 1,
-                    'msg' => 'Success',
-                    'data' => $Product
-                ]);
+                return json(['code' => 1, 'msg' => 'Product added successfully', 'data' => $Product]);
             } else {
-                return json(['code' => 0, 'msg' => 'Failed']);
+                return json(['code' => 0, 'msg' => 'Failed to insert product']);
             }
 
         } catch (\Exception $e) {
@@ -121,82 +120,69 @@ class Product extends Api
         }
     }
 
-
     public function editProduct()
     {
         try {
-            $id = $this->request->post('id'); // id នៃ Product ដែលចង់ edit
-            if (!$id) {
-                return json(['code' => 0, 'msg' => 'Product ID is required']);
+            $id = $this->request->post('id');
+            $product_name = $this->request->post("product_name");
+            $category_id = $this->request->post("category_id");
+            $product_details = $this->request->post("product_details");
+            $product_cost = $this->request->post("product_cost");
+            $product_price = $this->request->post("product_price");
+            $status = $this->request->post("status");
+
+            // ✅ ពិនិត្យថា product មានក្នុង DB ឬអត់
+            $product = Db::name('products')->where('id', $id)->find();
+            if (!$product) {
+                return json(['code' => 0, 'msg' => 'Product not found']);
             }
 
-            // ✅ Check if id is numeric
-            if (!is_numeric($id)) {
-                return json(['code' => 0, 'msg' => 'Product ID must be a number']);
-            }
-
-            $title = $this->request->post("title");
-            $short_content = $this->request->post("short_content", "");
-            $content = $this->request->post("content", "");
-
-            // ពិនិត្យថា Product មានតែ id នេះឬទេ
-            $Product = Db::name('products')->where('id', $id)->find();
-            if (!$Product) {
-                return json(['code' => 0, 'msg' => 'This Product not found']);
-            }
-
-            // ✅ ពិនិត្យមើលថា title មាន Product ផ្សេងមានដូចគ្នាមានទេ
-            $exists = Db::name('products')
-                        ->where('title', $title)
-                        ->where('id', '<>', $id)
-                        ->find();
-            if ($exists) {
-                return json(['code' => 0, 'msg' => 'This Product is already']);
+            // ✅ ពិនិត្យថា category មានក្នុង DB ឬអត់
+            $categoryExists = Db::name('categories')->where('id', $category_id)->find();
+            if (!$categoryExists) {
+                return json(['code' => 0, 'msg' => 'Category ID does not exist']);
             }
 
             $file = request()->file('image');
-            $imagePath = $Product['image']; // default ជា previous image
+            $imagePath = $product['image']; // រក្សារូបចាស់ជាលំនាំដើម
 
             if ($file) {
-                // ផ្ទុកទៅ public/uploads/
                 $uploadDir = ROOT_PATH . 'public' . DS . 'uploads';
                 $info = $file->move($uploadDir);
                 if ($info) {
-                    // replace previous image
+                    // លុបរូបចាស់
+                    if (!empty($product['image']) && file_exists(ROOT_PATH . 'public' . $product['image'])) {
+                        unlink(ROOT_PATH . 'public' . $product['image']);
+                    }
+                    // ផ្ទុករូបថ្មី
                     $imagePath = '/uploads/' . str_replace('\\', '/', $info->getSaveName());
                 } else {
                     return json(['code' => 0, 'msg' => $file->getError()]);
                 }
             }
 
-            // រៀបចំ data សម្រាប់ update
+            // ✅ រៀបចំទិន្នន័យសម្រាប់ update
             $dataToUpdate = [
-                'title' => $title,
+                'product_name' => $product_name,
+                'category_id' => $category_id,
+                'product_details' => $product_details,
+                'product_cost' => $product_cost,
+                'product_price' => $product_price,
+                'status' => $status ?: 'public',
                 'image' => $imagePath,
-                'short_content' => $short_content,
-                'content' => $content,
-                'updatetime' => time()
+                'updatetime' => time(),
             ];
 
-            // update DB
-            $result = Db::name('products')->where('id', $id)->update($dataToUpdate);
+            $updated = Db::name('products')->where('id', $id)->update($dataToUpdate);
 
-            if ($result !== false) {
-                // query ទិន្នន័យថ្មី
-                $Product = Db::name('products')->where('id', $id)->find();
-
-                // បន្ថែម domain ទៅ image_path
-                if (!empty($Product['image'])) {
-                    $Product['image'] = request()->domain() . $Product['image'];
+            if ($updated !== false) {
+                $updatedProduct = Db::name('products')->where('id', $id)->find();
+                if (!empty($updatedProduct['image'])) {
+                    $updatedProduct['image'] = request()->domain() . $updatedProduct['image'];
                 }
-
-                return json([
-                    'code' => 1,
-                    'msg' => 'Product updated successfully',
-                    'data' => $Product
-                ]);
+                return json(['code' => 1, 'msg' => 'Product updated successfully', 'data' => $updatedProduct]);
             } else {
-                return json(['code' => 0, 'msg' => 'Failed to update Product']);
+                return json(['code' => 0, 'msg' => 'Failed to update product']);
             }
 
         } catch (\Exception $e) {
@@ -204,57 +190,45 @@ class Product extends Api
         }
     }
 
-
-
     public function deleteProduct()
-{
-    try {
-        $id = $this->request->post('id'); // Product id
+    {
+        try {
+            $id = $this->request->post('id');
 
-        // ✅ Check if id is provided
-        if (!$id) {
-            return json(['code' => 0, 'msg' => 'Product ID is required']);
-        }
-
-        // ✅ Check if id is numeric
-        if (!is_numeric($id)) {
-            return json(['code' => 0, 'msg' => 'Product ID must be a number']);
-        }
-
-        // check Product exists
-        $Product = Db::name('products')->where('id', $id)->find();
-        if (!$Product) {
-            return json(['code' => 0, 'msg' => 'Product not found']);
-        }
-
-        // check if any product is using this Product
-        $productExists = Db::name('products')->where('Product_id', $id)->find();
-        if ($productExists) {
-            return json(['code' => 0, 'msg' => 'Cannot delete, Product is in use']);
-        }
-
-        // optional: delete image file from server
-        if (!empty($Product['image'])) {
-            $imagePath = ROOT_PATH . 'public' . DS . str_replace('/', DS, ltrim($Product['image'], '/'));
-            if (file_exists($imagePath)) {
-                @unlink($imagePath); // delete file safely
+            if (!$id) {
+                return json(['code' => 0, 'msg' => 'Product ID is required']);
             }
+
+            // ✅ ពិនិត្យថា product មានក្នុង DB ឬអត់
+            $product = Db::name('products')->where('id', $id)->find();
+            if (!$product) {
+                return json(['code' => 0, 'msg' => 'Product not found']);
+            }
+
+            // ✅ ពិនិត្យថា product នេះត្រូវបានប្រើក្នុង table stock ឬអត់
+            $usedInStock = Db::name('stock')->where('product_id', $id)->find();
+            if ($usedInStock) {
+                return json(['code' => 0, 'msg' => 'Cannot delete this product because it exists in stock records']);
+            }
+
+            // ✅ លុបរូបភាពចេញពី server (បើមាន)
+            if (!empty($product['image']) && file_exists(ROOT_PATH . 'public' . $product['image'])) {
+                unlink(ROOT_PATH . 'public' . $product['image']);
+            }
+
+            // ✅ លុបទិន្នន័យពី DB
+            $deleted = Db::name('products')->where('id', $id)->delete();
+
+            if ($deleted) {
+                return json(['code' => 1, 'msg' => 'Product deleted successfully']);
+            } else {
+                return json(['code' => 0, 'msg' => 'Failed to delete product']);
+            }
+
+        } catch (\Exception $e) {
+            return json(['error' => $e->getMessage()]);
         }
-
-        // delete Product
-        $result = Db::name('products')->where('id', $id)->delete();
-
-        if ($result) {
-            return json(['code' => 1, 'msg' => 'Product deleted successfully']);
-        } else {
-            return json(['code' => 0, 'msg' => 'Failed to delete Product']);
-        }
-
-    } catch (\Exception $e) {
-        return json(['error' => $e->getMessage()]);
     }
-}
-
 
 
 }

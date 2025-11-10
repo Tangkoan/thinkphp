@@ -32,7 +32,7 @@ class Product extends Model
     
     public function getStatusList()
     {
-        return ['255' => __('Status 255')];
+        return ['public' => __('Public'), 'hidden' => __('Hidden')];
     }
 
 
