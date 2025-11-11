@@ -28,11 +28,10 @@ class Categories extends Model
         'status_text'
     ];
     
-
-    
+    // Get status list
     public function getStatusList()
     {
-        return ['1' => __('Status 1')];
+        return ['1' => __('Public'), '0' => __('Draft')];
     }
 
 
@@ -43,7 +42,5 @@ class Categories extends Model
         return isset($list[$value]) ? $list[$value] : '';
     }
 
-
-
-
+    
 }

@@ -34,4 +34,26 @@ class Product extends Backend
      */
 
 
+    public function index()
+    {
+        if ($this->request->isAjax()) {
+            list($where, $sort, $order, $offset, $limit) = $this->buildparams();
+            if ($this->request->request('keyField')) {
+                return $this->selectpage();
+            }
+
+            $list = $this->model
+                ->with(["category"])
+                ->where($where)
+                ->order($sort, $order)
+                ->paginate($limit);
+            $result = array("total" => $list->total(), "rows" => $list->items());
+
+            return json($result);
+        }
+        return $this->view->fetch();
+    }
+
+    
+
 }

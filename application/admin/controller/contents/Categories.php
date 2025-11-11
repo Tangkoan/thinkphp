@@ -3,6 +3,7 @@
 namespace app\admin\controller\contents;
 
 use app\common\controller\Backend;
+use think\Db; // ✅ បន្ថែមបន្ទាត់នេះ
 
 /**
  * 
@@ -32,6 +33,66 @@ class Categories extends Backend
      * 因此在当前控制器中可不用编写增删改查的代码,除非需要自己控制这部分逻辑
      * 需要将application/admin/library/traits/Backend.php中对应的方法复制到当前控制器,然后进行修改
      */
+
+
+    
+//        public function index()
+// {
+//     if ($this->request->isAjax()) {
+//         $w = ['status' => 'public'];
+
+//         $q_word = $this->request->request("q_word/a", []);
+//         if (array_filter($q_word)) {
+//             $wq = [];
+//             foreach ($q_word as $value) {
+//                 if ($value !== '') {
+//                     $wq[] = ['title', 'like', "%{$value}%"];
+//                 }
+//             }
+//             if (!empty($wq)) {
+//                 $query = Db::name('categories')->where($w)->whereOr($wq);
+//             } else {
+//                 $query = Db::name('categories')->where($w);
+//             }
+//         } else {
+//             $query = Db::name('categories')->where($w);
+//         }
+
+//         $data = $query->field('id,title')->select();
+//         return json($data);
+//     }
+// }
+
+
+
+public function index()
+{
+    if ($this->request->isAjax()) {
+        $w = ['status' => '1'];
+
+        $q_word = $this->request->request("q_word/a", []);
+        $query = Db::name('categories')->where($w);
+
+        if (array_filter($q_word)) {
+            $wq = [];
+            foreach ($q_word as $value) {
+                if ($value !== '') {
+                    $wq[] = ['title', 'like', "%{$value}%"];
+                }
+            }
+            if (!empty($wq)) {
+                $query = $query->whereOr($wq);
+            }
+        }
+
+        $data = $query->field('id,title')->select();
+
+        // ✅ បង្កើត structure ត្រឹមត្រូវសម្រាប់ selectpage
+        return json(['list' => $data]);
+    }
+}
+
+
 
 
 }

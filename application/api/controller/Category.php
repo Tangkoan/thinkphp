@@ -26,7 +26,7 @@ class Category extends Api
             $status = $this->request->post("status");
 
             $data = DB::name('categories')
-                ->where('status', 1)
+                ->where('status', 'public')
                 ->select(); // $data គឺជា Array
 
             // 1. យក Domain
@@ -90,7 +90,7 @@ class Category extends Api
                 'image' => $imagePath,
                 'short_content' => $short_content,
                 'content' => $content,
-                'status' => 1,
+                'status' => "public",
                 'createtime' => time(),
                 'updatetime' => time()
             ];

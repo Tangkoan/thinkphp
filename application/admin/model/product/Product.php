@@ -43,6 +43,10 @@ class Product extends Model
         return isset($list[$value]) ? $list[$value] : '';
     }
 
+    public function category()
+    {
+        return $this->belongsTo('app\admin\model\contents\Categories', 'category_id')->setEagerlyType(0);
+    }
 
 
 
