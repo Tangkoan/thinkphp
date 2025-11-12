@@ -36,38 +36,98 @@ class Stock extends Backend
 
     public function index()
     {
+        // សម្អាតទិន្នន័យពី Request ដើម្បីជៀសវាងសុវត្ថិភាព និងពាក្យបញ្ចូលមិនចាំបាច់
+        $this->request->filter(['strip_tags', 'trim']);
+
         if ($this->request->isAjax()) {
-            list($where, $sort, $order, $offset, $limit) = $this->buildparams();
+            // ប្រើសម្រាប់ Selectpage នៅលើ frontend (ការរើសទិន្នន័យដោយស្វ័យប្រវត្តិ)
             if ($this->request->request('keyField')) {
                 return $this->selectpage();
             }
 
-            $list = $this->model
-            ->with(["product"])
-            ->where(function($query) use ($where){
-                // $where ត្រូវជា array
-                if(is_array($where)){
-                    // status belong to stock table
-                    if(isset($where['status'])){
-                        $query->where('stock.status', $where['status']);
-                        unset($where['status']);
-                    }
-                    // បន្ថែម where ផ្សេងៗ
-                    foreach($where as $k => $v){
-                        $query->where($k, $v);
-                    }
+            // ទទួល filter និង operator (op) ពី frontend
+            $filter = $this->request->request('filter');
+            $params = json_decode(urldecode($filter), true);
+
+            $op_filter = $this->request->request('op');
+            $op = json_decode(urldecode($op_filter), true);
+
+            $w = [];
+
+            // បើមាន filter និង op => បម្លែងឲ្យសមទៅ alias 's'
+            if ($params && $op) {
+                $new_parmas = [];
+                $new_op = [];
+
+                foreach ($params as $key => $value) {
+                    // ដាក់ alias 's.' ដើម្បីបញ្ជាក់ថា field មកពីតារាងសំខាន់ (stock table)
+                    $new_parmas["s.$key"] = $value;
+                    $new_op["s.$key"] = $op[$key];
                 }
-            })
-            ->order($sort, $order)
-            ->paginate($limit);
-    
-            $result = array("total" => $list->total(), "rows" => $list->items());
+
+                // បង្កើត where condition
+                $w = $this->rewriteQuery($new_parmas, $new_op);
+            }
+
+            // បង្កើត parameter សម្រាប់ where, sort, order, offset, limit
+            list($where, $sort, $order, $offset, $limit) = $this->buildparams();
+
+            // 🟩 Query សំខាន់សម្រាប់ទាញ Data
+            $list = $this->model
+                ->alias('s') // 👉 ដាក់ alias 's' សម្រាប់តារាងសំខាន់ (stock table)
+                
+                // 🟩 JOIN ទៅតារាង Product
+                // 'fa_products' គឺឈ្មោះតារាងពិតនៅក្នុង database ដែលផ្ទុកទិន្នន័យ Product
+                // យើង join ដើម្បីយកឈ្មោះ Productតាម product_id
+                // 'sc' ជា alias សម្រាប់ fa_products ដើម្បីសរសេរងាយក្នុង field()
+                ->join('fa_products sc', 's.product_id = sc.id', 'LEFT')
+
+                // 🟩 ជ្រើសយក Field ដែលត្រូវការ
+                // s.* = ទាញទិន្នន័យទាំងអស់ពី stock table
+                // sc.product_name = យកឈ្មោះ Product ពីតារាង fa_products
+                // និងដាក់ alias ថា 'product.product_name' ដើម្បីអោយបង្ហាញលើ frontend ជា field nested
+                ->field('s.*, sc.product_name as `product.product_name`')
+
+                // ដាក់ where ដើម្បី filter ទិន្នន័យ
+                ->where($w)
+
+                // ដាក់លំដាប់តាម $sort និង $order
+                ->order($sort, $order)
+
+                // កំណត់ចំនួនដែលត្រូវបង្ហាញក្នុងមួយទំព័រ
+                ->limit($offset, $limit)
+
+                // ទាញទិន្នន័យចេញពី database
+                ->select();
+
+            // 🟩 ការគណនាចំនួនសរុបសម្រាប់ pagination
+            $total = $this->model
+                ->alias('s')
+                ->join('fa_products sc', 's.product_id = sc.id', 'LEFT')
+                ->where($w)
+                ->count();
+
+            // 🟩 បម្លែង Collection ទៅជា array
+            $rows = collection($list)->toArray();
+
+            // 🟩 បញ្ចូលចូលក្នុង result ដើម្បីបញ្ជូនទៅ frontend ជា JSON
+            $result = [
+                "total" => $total,
+                "rows" => $rows
+            ];
 
             return json($result);
         }
+
+        // បើមិនមែន Ajax => បង្ហាញ View ទូទៅ
         return $this->view->fetch();
     }
 
+
+
+
+
+    
     
     public function product()
     {

@@ -34,40 +34,110 @@ class Product extends Backend
      */
 
 
+    // public function index()
+    // {
+    //     if ($this->request->isAjax()) {
+    //         list($where, $sort, $order, $offset, $limit) = $this->buildparams();
+    //         if ($this->request->request('keyField')) {
+    //             return $this->selectpage();
+    //         }
+
+
+    //         $list = $this->model
+    //         ->with(["category"])
+    //         ->where(function($query) use ($where){
+    //             // $where ត្រូវជា array
+    //             if(is_array($where)){
+    //                 // status belong to product table
+    //                 if(isset($where['status'])){
+    //                     $query->where('product.status', $where['status']);
+    //                     unset($where['status']);
+    //                 }
+    //                 // បន្ថែម where ផ្សេងៗ
+    //                 foreach($where as $k => $v){
+    //                     $query->where($k, $v);
+    //                 }
+    //             }
+    //         })
+    //         ->order($sort, $order)
+    //         ->paginate($limit);
+
+    //         $result = array("total" => $list->total(), "rows" => $list->items());
+
+    //         return json($result);
+    //     }
+    //     return $this->view->fetch();
+    // }
+
+
+
+
     public function index()
     {
+        $this->request->filter(['strip_tags', 'trim']);
+
         if ($this->request->isAjax()) {
-            list($where, $sort, $order, $offset, $limit) = $this->buildparams();
             if ($this->request->request('keyField')) {
                 return $this->selectpage();
             }
 
+            $filter = $this->request->request('filter');
+            $params = json_decode(urldecode($filter), true);
 
-            $list = $this->model
-            ->with(["category"])
-            ->where(function($query) use ($where){
-                // $where ត្រូវជា array
-                if(is_array($where)){
-                    // status belong to product table
-                    if(isset($where['status'])){
-                        $query->where('product.status', $where['status']);
-                        unset($where['status']);
-                    }
-                    // បន្ថែម where ផ្សេងៗ
-                    foreach($where as $k => $v){
-                        $query->where($k, $v);
-                    }
+            $op_filter = $this->request->request('op');
+            $op = json_decode(urldecode($op_filter), true);
+
+            $w = [];
+
+            if ($params && $op) {
+                $new_parmas = [];
+                $new_op = [];
+
+                foreach ($params as $key => $value) {
+                    $new_parmas["s.$key"] = $value;
+                    $new_op["s.$key"] = $op[$key];
                 }
-            })
-            ->order($sort, $order)
-            ->paginate($limit);
 
-            $result = array("total" => $list->total(), "rows" => $list->items());
+                // បង្កើត where condition
+                $w = $this->rewriteQuery($new_parmas, $new_op);
+            }
+
+            list($where, $sort, $order, $offset, $limit) = $this->buildparams();
+
+            // 🟩 Query សំខាន់សម្រាប់ទាញ Data
+            $list = $this->model
+                ->alias('s')
+                ->join('fa_categories sc', 's.category_id = sc.id', 'LEFT')
+                ->field('s.*, sc.title as `category.title`')
+                ->where($w)
+                ->order($sort, $order)
+                ->limit($offset, $limit)
+                ->select();
+
+            // 🟩 ការគណនាចំនួនសរុបសម្រាប់ pagination
+            $total = $this->model
+                ->alias('s')
+                ->join('fa_categories sc', 's.category_id = sc.id', 'LEFT')
+                ->where($w)
+                ->count();
+
+            // 🟩 បម្លែង Collection ទៅជា array
+            $rows = collection($list)->toArray();
+
+            // 🟩 បញ្ចូលចូលក្នុង result ដើម្បីបញ្ជូនទៅ frontend ជា JSON
+            $result = [
+                "total" => $total,
+                "rows" => $rows
+            ];
 
             return json($result);
         }
+        // បើមិនមែន Ajax => បង្ហាញ View ទូទៅ
         return $this->view->fetch();
     }
+
+
+    
 
     
 
