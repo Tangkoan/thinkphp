@@ -26,7 +26,7 @@ class Product extends Api
             $status = $this->request->post("status");
 
             $data = DB::name('products')
-                ->where('status',"public")
+                ->where('status',"1")
                 ->select(); // $data គឺជា Array
             // 1. យក Domain
             $domain = $this->request->domain();

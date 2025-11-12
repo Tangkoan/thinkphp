@@ -26,7 +26,7 @@ class Category extends Api
             $status = $this->request->post("status");
 
             $data = DB::name('categories')
-                ->where('status', 'public')
+                ->where('status', '1')
                 ->select(); // $data គឺជា Array
 
             // 1. យក Domain
@@ -207,53 +207,53 @@ class Category extends Api
 
 
     public function deleteCategory()
-{
-    try {
-        $id = $this->request->post('id'); // category id
+    {
+        try {
+            $id = $this->request->post('id'); // category id
 
-        // ✅ Check if id is provided
-        if (!$id) {
-            return json(['code' => 0, 'msg' => 'Category ID is required']);
-        }
-
-        // ✅ Check if id is numeric
-        if (!is_numeric($id)) {
-            return json(['code' => 0, 'msg' => 'Category ID must be a number']);
-        }
-
-        // check category exists
-        $category = Db::name('categories')->where('id', $id)->find();
-        if (!$category) {
-            return json(['code' => 0, 'msg' => 'Category not found']);
-        }
-
-        // check if any product is using this category
-        $productExists = Db::name('products')->where('category_id', $id)->find();
-        if ($productExists) {
-            return json(['code' => 0, 'msg' => 'Cannot delete, category is in use']);
-        }
-
-        // optional: delete image file from server
-        if (!empty($category['image'])) {
-            $imagePath = ROOT_PATH . 'public' . DS . str_replace('/', DS, ltrim($category['image'], '/'));
-            if (file_exists($imagePath)) {
-                @unlink($imagePath); // delete file safely
+            // ✅ Check if id is provided
+            if (!$id) {
+                return json(['code' => 0, 'msg' => 'Category ID is required']);
             }
+
+            // ✅ Check if id is numeric
+            if (!is_numeric($id)) {
+                return json(['code' => 0, 'msg' => 'Category ID must be a number']);
+            }
+
+            // check category exists
+            $category = Db::name('categories')->where('id', $id)->find();
+            if (!$category) {
+                return json(['code' => 0, 'msg' => 'Category not found']);
+            }
+
+            // check if any product is using this category
+            $productExists = Db::name('products')->where('category_id', $id)->find();
+            if ($productExists) {
+                return json(['code' => 0, 'msg' => 'Cannot delete, category is in use']);
+            }
+
+            // optional: delete image file from server
+            if (!empty($category['image'])) {
+                $imagePath = ROOT_PATH . 'public' . DS . str_replace('/', DS, ltrim($category['image'], '/'));
+                if (file_exists($imagePath)) {
+                    @unlink($imagePath); // delete file safely
+                }
+            }
+
+            // delete category
+            $result = Db::name('categories')->where('id', $id)->delete();
+
+            if ($result) {
+                return json(['code' => 1, 'msg' => 'Category deleted successfully']);
+            } else {
+                return json(['code' => 0, 'msg' => 'Failed to delete category']);
+            }
+
+        } catch (\Exception $e) {
+            return json(['error' => $e->getMessage()]);
         }
-
-        // delete category
-        $result = Db::name('categories')->where('id', $id)->delete();
-
-        if ($result) {
-            return json(['code' => 1, 'msg' => 'Category deleted successfully']);
-        } else {
-            return json(['code' => 0, 'msg' => 'Failed to delete category']);
-        }
-
-    } catch (\Exception $e) {
-        return json(['error' => $e->getMessage()]);
     }
-}
 
 
 
