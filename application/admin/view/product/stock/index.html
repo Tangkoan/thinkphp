@@ -20,6 +20,8 @@
                         <a href="javascript:;" class="btn btn-success btn-add {:$auth->check('product/stock/add')?'':'hide'}" title="{:__('Add')}" ><i class="fa fa-plus"></i> {:__('Add')}</a>
                         <a href="javascript:;" class="btn btn-success btn-edit btn-disabled disabled {:$auth->check('product/stock/edit')?'':'hide'}" title="{:__('Edit')}" ><i class="fa fa-pencil"></i> {:__('Edit')}</a>
                         <a href="javascript:;" class="btn btn-danger btn-del btn-disabled disabled {:$auth->check('product/stock/del')?'':'hide'}" title="{:__('Delete')}" ><i class="fa fa-trash"></i> {:__('Delete')}</a>
+
+                        
                         
 
                         <div class="dropdown btn-group {:$auth->check('product/stock/multi')?'':'hide'}">

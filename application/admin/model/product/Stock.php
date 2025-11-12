@@ -30,9 +30,10 @@ class Stock extends Model
     
 
     
+   // Function នេះសម្រាប់ status មែន តែក៏បន្ថេម Header របស់ List Category អោយយើងដឹងថា មាន All , Public , Draft
     public function getStatusList()
-    {
-        return ['255' => __('Status 255')];
+    {   
+        return ['1' => __('Public'), '0' => __('Draft')];
     }
 
 
@@ -42,8 +43,12 @@ class Stock extends Model
         $list = $this->getStatusList();
         return isset($list[$value]) ? $list[$value] : '';
     }
+    
 
-
+    public function product()
+    {
+        return $this->belongsTo('app\admin\model\product\Product', 'product_id')->setEagerlyType(0);
+    }
 
 
 }

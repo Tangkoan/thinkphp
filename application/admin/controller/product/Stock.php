@@ -3,6 +3,7 @@
 namespace app\admin\controller\product;
 
 use app\common\controller\Backend;
+use think\Db; // ✅ បន្ថែមបន្ទាត់នេះ
 
 /**
  * 
@@ -33,5 +34,66 @@ class Stock extends Backend
      * 需要将application/admin/library/traits/Backend.php中对应的方法复制到当前控制器,然后进行修改
      */
 
+    public function index()
+    {
+        if ($this->request->isAjax()) {
+            list($where, $sort, $order, $offset, $limit) = $this->buildparams();
+            if ($this->request->request('keyField')) {
+                return $this->selectpage();
+            }
+
+            $list = $this->model
+            ->with(["product"])
+            ->where(function($query) use ($where){
+                // $where ត្រូវជា array
+                if(is_array($where)){
+                    // status belong to stock table
+                    if(isset($where['status'])){
+                        $query->where('stock.status', $where['status']);
+                        unset($where['status']);
+                    }
+                    // បន្ថែម where ផ្សេងៗ
+                    foreach($where as $k => $v){
+                        $query->where($k, $v);
+                    }
+                }
+            })
+            ->order($sort, $order)
+            ->paginate($limit);
+    
+            $result = array("total" => $list->total(), "rows" => $list->items());
+
+            return json($result);
+        }
+        return $this->view->fetch();
+    }
+
+    
+    public function product()
+    {
+        if ($this->request->isAjax()) {
+            $w = ['status' => '1'];
+
+            $q_word = $this->request->request("q_word/a", []);
+            $query = Db::name('products')->where($w);
+
+            if (array_filter($q_word)) {
+                $wq = [];
+                foreach ($q_word as $value) {
+                    if ($value !== '') {
+                        $wq[] = ['product_name', 'like', "%{$value}%"];
+                    }
+                }
+                if (!empty($wq)) {
+                    $query = $query->whereOr($wq);
+                }
+            }
+
+            $data = $query->field('id,product_name')->select();
+
+            // ✅ បង្កើត structure ត្រឹមត្រូវសម្រាប់ selectpage
+            return json(['list' => $data]);
+        }
+    }
 
 }

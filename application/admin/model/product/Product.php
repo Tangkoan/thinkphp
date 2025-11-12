@@ -30,9 +30,10 @@ class Product extends Model
     
 
     
+    // Function នេះសម្រាប់ status មែន តែក៏បន្ថេម Header របស់ List Category អោយយើងដឹងថា មាន All , Public , Draft
     public function getStatusList()
-    {
-        return ['public' => __('Public'), 'hidden' => __('Hidden')];
+    {   
+        return ['1' => __('Public'), '0' => __('Draft')];
     }
 
 

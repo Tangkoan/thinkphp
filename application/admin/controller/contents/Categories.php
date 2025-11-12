@@ -3,7 +3,7 @@
 namespace app\admin\controller\contents;
 
 use app\common\controller\Backend;
-use think\Db; // ✅ បន្ថែមបន្ទាត់នេះ
+use think\Db;
 
 /**
  * 
@@ -35,62 +35,32 @@ class Categories extends Backend
      */
 
 
-    
-//        public function index()
-// {
-//     if ($this->request->isAjax()) {
-//         $w = ['status' => 'public'];
+    public function index()
+    {
+        if ($this->request->isAjax()) {
+            $w = ['status' => '1'];
 
-//         $q_word = $this->request->request("q_word/a", []);
-//         if (array_filter($q_word)) {
-//             $wq = [];
-//             foreach ($q_word as $value) {
-//                 if ($value !== '') {
-//                     $wq[] = ['title', 'like', "%{$value}%"];
-//                 }
-//             }
-//             if (!empty($wq)) {
-//                 $query = Db::name('categories')->where($w)->whereOr($wq);
-//             } else {
-//                 $query = Db::name('categories')->where($w);
-//             }
-//         } else {
-//             $query = Db::name('categories')->where($w);
-//         }
+            $q_word = $this->request->request("q_word/a", []);
+            $query = Db::name('categories')->where($w);
 
-//         $data = $query->field('id,title')->select();
-//         return json($data);
-//     }
-// }
-
-
-
-public function index()
-{
-    if ($this->request->isAjax()) {
-        $w = ['status' => '1'];
-
-        $q_word = $this->request->request("q_word/a", []);
-        $query = Db::name('categories')->where($w);
-
-        if (array_filter($q_word)) {
-            $wq = [];
-            foreach ($q_word as $value) {
-                if ($value !== '') {
-                    $wq[] = ['title', 'like', "%{$value}%"];
+            if (array_filter($q_word)) {
+                $wq = [];
+                foreach ($q_word as $value) {
+                    if ($value !== '') {
+                        $wq[] = ['title', 'like', "%{$value}%"];
+                    }
+                }
+                if (!empty($wq)) {
+                    $query = $query->whereOr($wq);
                 }
             }
-            if (!empty($wq)) {
-                $query = $query->whereOr($wq);
-            }
+
+            $data = $query->field('id,title')->select();
+
+            // ✅ បង្កើត structure ត្រឹមត្រូវសម្រាប់ selectpage
+            return json(['list' => $data]);
         }
-
-        $data = $query->field('id,title')->select();
-
-        // ✅ បង្កើត structure ត្រឹមត្រូវសម្រាប់ selectpage
-        return json(['list' => $data]);
     }
-}
 
 
 

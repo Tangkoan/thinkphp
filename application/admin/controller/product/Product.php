@@ -42,11 +42,26 @@ class Product extends Backend
                 return $this->selectpage();
             }
 
+
             $list = $this->model
-                ->with(["category"])
-                ->where($where)
-                ->order($sort, $order)
-                ->paginate($limit);
+            ->with(["category"])
+            ->where(function($query) use ($where){
+                // $where ត្រូវជា array
+                if(is_array($where)){
+                    // status belong to product table
+                    if(isset($where['status'])){
+                        $query->where('product.status', $where['status']);
+                        unset($where['status']);
+                    }
+                    // បន្ថែម where ផ្សេងៗ
+                    foreach($where as $k => $v){
+                        $query->where($k, $v);
+                    }
+                }
+            })
+            ->order($sort, $order)
+            ->paginate($limit);
+
             $result = array("total" => $list->total(), "rows" => $list->items());
 
             return json($result);
