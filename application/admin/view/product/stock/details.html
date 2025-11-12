@@ -1,0 +1,62 @@
+<div class="panel panel-default">
+    <div class="panel-heading">
+        <h3 class="panel-title">{:__('Stock Details')}</h3>
+    </div>
+    <div class="panel-body">
+        
+        <table class="table table-striped">
+            <tbody>
+                <!-- <tr>
+                    <td width="15%">{:__('Id')}</td>
+                    <td width="85%">{$row.id}</td>
+                </tr> -->
+                <tr>
+                    <td>{:__('Product Name')}</td>
+                    <td>
+                        {$row.product.product_name}
+                    </td>
+                </tr>
+                <tr>
+                    <td>{:__('Quantity')}</td>
+                    <td>{$row.quantity}</td>
+                </tr>
+               <tr>
+                    <td>{:__('Type')}</td>
+                    <td>
+                        <span class="{$row.type == 1 ? 'text-success' : 'text-danger'}">
+                            <b>{$row.type == 1 ? 'Stock IN' : 'Stock OUT'}</b>
+                        </span>
+                    </td>
+                </tr>
+                <tr>
+                    <td>{:__('Date')}</td>
+                    <td>
+                        {$row.date|datetime="Y-m-d H:i:s"}
+                    </td>
+                </tr>
+                <tr>
+                    <td>{:__('Status')}</td>
+                    <td>
+                        {$row.status_text}
+                    </td>
+                </tr>
+                <tr>
+                    <td>{:__('Createtime')}</td>
+                    <td>{$row.createtime|datetime="Y-m-d H:i:s"}</td>
+                </tr>
+                <tr>
+                    <td>{:__('Updatetime')}</td>
+                    <td>{$row.updatetime|datetime="Y-m-d H:i:s"}</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="hide layer-footer">
+            <label class="control-label col-xs-12 col-sm-2"></label>
+            <div class="col-xs-12 col-sm-8">
+                <button type="reset" class="btn btn-primary btn-close" onclick="parent.Layer.close(parent.Layer.getFrameIndex(window.name))">{:__('Close')}</button>
+            </div>
+        </div>
+
+    </div>
+</div>

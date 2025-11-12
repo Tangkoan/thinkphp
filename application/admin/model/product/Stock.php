@@ -36,6 +36,8 @@ class Stock extends Model
         return ['1' => __('Public'), '0' => __('Draft')];
     }
 
+ 
+
 
     public function getStatusTextAttr($value, $data)
     {

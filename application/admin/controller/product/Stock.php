@@ -96,4 +96,33 @@ class Stock extends Backend
         }
     }
 
+
+    /**
+     * ផ្ទាំងបង្ហាញព័ត៌មានលម្អិត (Details View)
+     */
+    public function details($ids = null)
+    {
+        if (!$ids) {
+            $this->error(__('Invalid parameters'));
+        }
+
+        // ✅ ដំណោះស្រាយ៖ បញ្ជាក់ឈ្មោះតារាងឲ្យច្បាស់
+        $tableName = $this->model->getTable(); // យកឈ្មោះតារាង 'stock'
+
+        // ប្រើ $tableName . '.id' ជំនួសឲ្យ 'id'
+        $row = $this->model
+            ->with('product')
+            ->where($tableName . '.id', $ids) // ⬅️ កែនៅត្រង់នេះ
+            ->find();
+        
+        if (!$row) {
+            $this->error(__('No Results were found'));
+        }
+
+        // បញ្ជូនទៅទំព័រ view
+        $this->view->assign('row', $row);
+        return $this->view->fetch();
+    }
+
+
 }
