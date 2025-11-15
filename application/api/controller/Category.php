@@ -199,7 +199,7 @@ class Category extends Api
                 return json(['code' => 0, 'msg' => 'Failed to update category']);
             }
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return json(['error' => $e->getMessage()]);
         }
     }
@@ -250,8 +250,61 @@ class Category extends Api
                 return json(['code' => 0, 'msg' => 'Failed to delete category']);
             }
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return json(['error' => $e->getMessage()]);
+        }
+    }
+
+    public function details()
+    {
+        try {
+            $id = $this->request->post('id');
+
+            if (!$id || !is_numeric($id)) {
+                return json(['code' => 0, 'msg' => 'Invalid category ID']);
+            }
+
+            // 1. Category info
+            $category = Db::name('categories')->where('id', $id)->find();
+            if (!$category) {
+                return json(['code' => 0, 'msg' => 'Category not found']);
+            }
+
+            // 2. Products of this category
+            $products = Db::name('products')
+                ->where('category_id', $id)
+                ->where('status', '1')
+                ->select();
+
+            // 3. Domain
+            $domain = $this->request->domain();
+
+            // 4. Attach domain to category image
+            if (!empty($category['image'])) {
+                $category['image'] = $domain . $category['image'];
+            }
+
+            // 5. Attach domain to product images
+            foreach ($products as &$product) {
+                if (!empty($product['image'])) {
+                    $product['image'] = $domain . $product['image'];
+                }
+            }
+
+            // 6. Final output
+            $result = [
+                'category' => $category,
+                'products' => $products
+            ];
+
+            return json([
+                'code' => 1,
+                'msg' => 'Success',
+                'data' => $result
+            ]);
+
+        } catch (Exception $e) {
+            return json(['code' => 0, 'msg' => $e->getMessage()]);
         }
     }
 
