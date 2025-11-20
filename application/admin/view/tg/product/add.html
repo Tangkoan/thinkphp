@@ -1,0 +1,96 @@
+<form id="add-form" class="form-horizontal" role="form" data-toggle="validator" method="POST" action="">
+
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Titile')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-titile" class="form-control" name="row[titile]" type="text">
+        </div>
+    </div>
+    
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Category_id')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-category_id" 
+                class="form-control selectpage" 
+                name="row[category_id]" 
+                type="text"
+                data-source="tg/product/category" 
+                data-primary-key="id" 
+                data-field="title" 
+                data-order-by="id desc" 
+                data-page-size="9" 
+                data-pagination="true"
+                data-multiple="false"
+                value="">
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Unit_id')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-unit_id" 
+                data-rule="required" 
+                data-source="tg/product/unit" 
+                class="form-control selectpage" 
+                name="row[unit_id]" 
+                type="text"
+                data-field="title"
+                data-primary-key="id"
+                data-page-size="1"
+                data-pagination="true"
+                data-multiple="false"
+                value="">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Brand_id')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-brand_id" 
+            data-rule="required" 
+            data-source="tg/product/brand" 
+            
+            class="form-control selectpage" 
+            name="row[brand_id]" 
+            type="text" 
+           
+            data-field="title"
+            data-primary-key="id"
+            data-page-size="1"
+            data-pagination="true"
+            data-multiple="false"
+            value=""
+            >
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Cost')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-cost" class="form-control" step="0.01" name="row[cost]" type="number">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Price')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-price" class="form-control" step="0.01" name="row[price]" type="number">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Status')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            
+            <div class="radio">
+            {foreach name="statusList" item="vo"}
+            <label for="row[status]-{$key}"><input id="row[status]-{$key}" name="row[status]" type="radio" value="{$key}" {in name="key" value="1"}checked{/in} /> {$vo}</label> 
+            {/foreach}
+            </div>
+
+        </div>
+    </div>
+    <div class="form-group layer-footer">
+        <label class="control-label col-xs-12 col-sm-2"></label>
+        <div class="col-xs-12 col-sm-8">
+            <button type="submit" class="btn btn-primary btn-embossed disabled">{:__('OK')}</button>
+        </div>
+    </div>
+</form>
