@@ -90,7 +90,7 @@ class Category extends Api
                 'image' => $imagePath,
                 'short_content' => $short_content,
                 'content' => $content,
-                'status' => "public",
+                'status' => "1",
                 'createtime' => time(),
                 'updatetime' => time()
             ];
