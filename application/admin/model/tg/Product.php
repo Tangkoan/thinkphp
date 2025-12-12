@@ -9,9 +9,6 @@ class Product extends Model
 {
 
     
-
-    
-
     // 表名
     protected $name = 'tg_product';
     
